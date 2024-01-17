@@ -1,0 +1,107 @@
+using System;
+using System.IO;
+using System.Net.Sockets;
+using System.Text;
+
+class Program
+{
+    static void Main()
+    {
+        TcpListener listener = new TcpListener(System.Net.IPAddress.Any, 12345);
+        listener.Start();
+
+        Console.WriteLine("Server is listening...");
+
+        while (true)
+        {
+            TcpClient client = listener.AcceptTcpClient();
+            Console.WriteLine("Client connected");
+
+            // 处理客户端连接
+            HandleClient(client);
+        }
+    }
+
+    static void HandleClient(TcpClient client)
+    {
+        NetworkStream stream = client.GetStream();
+        byte[] buffer = new byte[180];
+        StringBuilder messageBuilder = new StringBuilder();
+
+        while (true)
+        {
+            // 读取指定长度的数据
+            int bytesRead = stream.Read(buffer, 0, buffer.Length);
+
+            if (bytesRead == 0)
+            {
+                Console.WriteLine("Client disconnected");
+                break;
+            }
+
+            // 处理接收到的数据
+            string receivedData = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+            messageBuilder.Append(receivedData);
+
+            // 检查是否以后缀"$0"结尾
+            string message = messageBuilder.ToString();
+            if (message.EndsWith("$0"))
+            {
+                // 去掉后缀，输出消息
+                message = message.Substring(0, message.Length - 2);
+                Console.WriteLine($"Received message: {message}");
+
+                // 重置 StringBuilder 以接收下一个消息
+                messageBuilder.Clear();
+            }
+        }
+
+        client.Close();
+    }
+}
+
+
+
+// client
+
+using System;
+using System.Net.Sockets;
+using System.Text;
+
+class Program
+{
+    static void Main()
+    {
+        TcpClient client = new TcpClient("localhost", 12345);
+
+        // 发送消息
+        SendMessage(client, "This is a test message$0");
+        SendMessage(client, "Another message$0");
+
+        client.Close();
+    }
+
+    static void SendMessage(TcpClient client, string message)
+    {
+        NetworkStream stream = client.GetStream();
+        byte[] data = Encoding.UTF8.GetBytes(message.PadRight(180)); // 使用UTF-8编码，固定长度为180字节
+        stream.Write(data, 0, data.Length);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
