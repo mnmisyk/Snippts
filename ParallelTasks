@@ -1,0 +1,47 @@
+using System;
+using System.Collections.Concurrent;
+using System.Threading.Tasks;
+class Program
+{
+static async Task Main()
+{
+int totalTasks = 100;    // 使用BlockingCollection来存储任务结果
+    var completedTasks = new BlockingCollection<int>();
+
+    // 启动生产者任务，负责添加所有任务
+    Task producer = Task.Run(() =>
+    {
+        for (int i = 1; i <= totalTasks; i++)
+        {
+            completedTasks.Add(i);
+        }
+
+        completedTasks.CompleteAdding();
+    });
+    await producer; // 等待生产者任务完成
+    // 使用Parallel.ForEach并行处理任务
+    Parallel.ForEach(completedTasks.GetConsumingEnumerable(),
+        new ParallelOptions { MaxDegreeOfParallelism = maxConcurrentTasks },
+        taskId => RunTaskAsync(taskId).Wait());
+
+   
+    Console.WriteLine("All tasks completed!");
+}
+
+static async Task RunTaskAsync(int taskId)
+{
+    Console.WriteLine($"Task {taskId} started.");
+
+   
+    // 模拟任务执行
+    await Task.Delay(new Random().Next(2000,3000));
+
+    Console.WriteLine($"Task {taskId}------- finished.");
+
+   
+   
+}
+
+int maxConcurrentTasks = 10;
+
+}
